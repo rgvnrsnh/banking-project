@@ -18,8 +18,7 @@ const beneficiary = new mongoose.Schema(
         linked_mobile: { type: Number, unique: true, required: true },
         orderId: { type: String, unique: true, max: 30, required: true },
         action: { type: String, required: true },
-        api_key: { type: String, max: 255, unique: true },
-        action: { type: String, required: true, default: "add_beneficiary" }
+        api_key: { type: String, max: 255, unique: true }
     }
 );
 

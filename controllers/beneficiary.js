@@ -39,16 +39,26 @@ const isValidBank = function (bankname) {
         return false;
 }
 
+const isValidInput = function (data) {
+    if (data != null && data != undefined) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
+const getdate = function () {
+    const date = new Date();
 
-// controllers :->
+    const d = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+
+    return d;
+}
+
+// Functions :->
 const addBeneficiary = async function (req, res) {
 
     try {
-
-        const date = new Date();
-
-        const d = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
         const data = req.body;
 
@@ -124,7 +134,7 @@ const addBeneficiary = async function (req, res) {
 
         let bank_account_size = isValidNumber(bank_account);
 
-        if (bank_account_size !== 14) {
+        if (bank_account_size > 14) {
             return res.status(400).send({
                 status: "failed",
                 message: "invalid bank account no.",
@@ -202,7 +212,7 @@ const addBeneficiary = async function (req, res) {
                 status: "failed",
                 message: "Bank Account is Already exist with your beneficiry so please check it in your all beneficiry list!",
                 success: 0,
-                date: d
+                date: getdate()
             });
         }
 
@@ -210,12 +220,12 @@ const addBeneficiary = async function (req, res) {
 
         const savedbeneficiary = await Beneficiary.create(data);
 
-        return res.status(402).send({
+        return res.status(202).send({
             restext: data,
             status: "success",
             orderId: orderId,
             success: 1,
-            date: d,
+            date: getdate(),
         });
     }
     catch (error) {
@@ -234,9 +244,9 @@ const getAllBeneficiary = async function (req, res) {
 
         const data = req.body;
 
-        const { api_key, mobile_number, action } = data;
+        const { api_key, mobile_number } = data;
 
-        const allBeneficiary = await Beneficiary.find({ action: "add_beneficiary" });
+        const allBeneficiary = await Beneficiary.find({ mobile_number });
 
         if (allBeneficiary.length === 0) {
             return res.status(400).send({
@@ -268,9 +278,10 @@ const getAllBeneficiary = async function (req, res) {
 const deleteBeneficiary = async function (req, res) {
     try {
 
-        const data = req.body;
+        const filter = req.body;
 
-        const { bank_account, mobile_number } = data;
+        const { bank_account, mobile_number } = filter;
+
 
         if ((isValidNumber(bank_account) > 14)) {
             return res.status(400).send({
@@ -279,7 +290,15 @@ const deleteBeneficiary = async function (req, res) {
                 response: 0
             });
         }
-        const userdata = await Beneficiary.findOne({ bank_account });
+
+        if ((isValidNumber(mobile_number) < 10)) {
+            return res.status(400).send({
+                status: "FAILED",
+                message: "invalid mobile number",
+                response: 0
+            });
+        }
+        const userdata = await Beneficiary.findOne({ bank_account, mobile_number });
 
         if (!userdata) {
             return res.status(400).send({
@@ -309,7 +328,296 @@ const deleteBeneficiary = async function (req, res) {
     }
 }
 
+const specialBeneficiary = async function (req, res) {
+    try {
+        let filter = {};
 
-module.exports.addBeneficiary = addBeneficiary;
-module.exports.getAllBeneficiary = getAllBeneficiary;
-module.exports.deleteBeneficiary = deleteBeneficiary;
+        let data = req.body;
+        const { bank_account, mobile_number } = data;
+
+        if (bank_account === null || bank_account === undefined || (isValidNumber(bank_account) > 14)) {
+            return res.status(400).send({
+                status: "failed",
+                message: "invalid account number",
+                success: 0
+            });
+        }
+        else {
+            filter["bank_account"] = bank_account;
+        }
+
+        if (mobile_number === null || mobile_number === undefined || (isValidNumber(mobile_number) < 10)) {
+            return res.status(400).send({
+                status: "failed",
+                message: "invalid mobile number",
+                success: 0
+            });
+        }
+        else {
+            filter["mobile_number"] = mobile_number;
+        }
+
+        const userfound = await Beneficiary.find(filter);
+
+        if (userfound.length === 0) {
+            return res.status(400).send({
+                status: "FAILED",
+                message: "Oops! No any record acccess by this account number",
+                response: 0
+            });
+        }
+        else {
+            return res.status(200).send({
+                datarecord: userfound,
+                status: "success",
+                success: 1,
+                message: "successfully access your  beneficiary account detail here"
+            });
+        }
+    }
+    catch (error) {
+        return res.status(500).send({
+            status: "FAILED",
+            message: "not get response from server side",
+            response: 0,
+            err: error.message
+        });
+    }
+}
+
+
+const accountVerification = async function (req, res) {
+
+    try {
+        let filter = {};
+
+        const data = req.body;
+
+        const { Beneficiary_id, mobile_number, mobile, name, ifsc_code, bank_account, bank_name, channel, email, address, state, city, pincode } = data;
+
+        if (Beneficiary_id != null && Beneficiary_id != undefined) {
+            filter["orderId"] = Beneficiary_id;
+        }
+
+        if (mobile_number != null && mobile_number != undefined && (isValidNumber(mobile_number)) >= 10) {
+            filter["mobile_number"] = mobile_number;
+        }
+
+        if (mobile != null && mobile != undefined && (isValidNumber(mobile)) >= 10) {
+            filter["linked_mobile"] = mobile;
+        }
+
+        if (name != null && name != undefined) {
+            filter["name"] = name;
+        }
+
+        if (ifsc_code != null && ifsc_code != undefined) {
+            filter["ifsc_code"] = ifsc_code;
+        }
+
+        if (bank_account != null && bank_account != undefined) {
+            filter["bank_account"] = bank_account;
+        }
+
+        if (bank_name != null && bank_name != undefined) {
+            filter["bank_name"] = bank_name;
+        }
+
+        if (channel != null && channel != undefined) {
+            filter["channel"] = channel;
+        }
+
+        if (email != null && email != undefined) {
+            filter["email"] = email;
+        }
+
+        if (address != null && address != undefined) {
+            filter["address"] = address;
+        }
+
+        if (state != null && state != undefined) {
+            filter["state"] = state;
+        }
+
+        if (city != null && city != undefined) {
+            filter["city"] = city;
+        }
+
+        if (pincode != null && pincode != undefined) {
+            filter["pincode"] = pincode;
+        }
+
+        const userfound = await Beneficiary.find(filter);
+
+        if (userfound.length === 0) {
+            return res.status(400).send({
+                status: "FAILED",
+                message: "Oops! No any record acccess by your order id",
+                response: 0
+            });
+        }
+        else {
+            return res.status(200).send({
+                datarecord: userfound,
+                status: "success",
+                success: 1,
+                message: "successfully access your beneficiary account detail here"
+            });
+        }
+    }
+    catch (error) {
+        return res.status(500).send({
+            status: "FAILED",
+            message: "not get response from server side",
+            response: 0,
+            err: error.message
+        });
+    }
+}
+
+
+const moneyTransfer = async function (req, res) {
+
+    try {
+        let reciever = {}, sender = {};
+
+        const data = req.body;
+
+        const { orderId, mobile_number, mobile, name, ifsc_code, bank_account, bank_name, channel, email, address, state, city, pincode, amount } = data;
+
+        if (isValidInput(orderId)) {
+            reciever["orderId"] = orderId;
+        }
+
+        if (isValidInput(mobile_number)) {
+            reciever["linked_mobile"] = mobile_number;
+        }
+
+        if (isValidInput(mobile)) {
+            sender["mobile_number"] = mobile;
+        }
+
+        if (isValidInput(name)) {
+            reciever["name"] = name;
+        }
+
+        if (isValidInput(ifsc_code)) {
+            reciever["ifsc_code"] = ifsc_code;
+        }
+
+        if (isValidInput(bank_name)) {
+            reciever["bank_name"] = bank_name;
+        }
+
+        if (isValidInput(bank_account)) {
+            reciever["bank_account"] = bank_account;
+        }
+
+        if (isValidInput(channel) && ["NEFT", "IMPS"].includes(channel)) {
+            reciever["channel"] = channel;
+        }
+
+        if (isValidInput(email)) {
+            reciever["email"] = email;
+        }
+
+        if (isValidInput(address)) {
+            reciever["address"] = address;
+        }
+
+        if (isValidInput(state)) {
+            reciever["state"] = state;
+        }
+
+        if (isValidInput(city)) {
+            reciever["city"] = city;
+        }
+
+        if (isValidInput(pincode)) {
+            reciever["pincode"] = pincode;
+        }
+
+        const senderdata = await Beneficiary.findOne(sender);
+
+        if (!senderdata) {
+            return res.status(400).send({
+                status: "FAILED",
+                message: "Oops! No any record acccess by this account number",
+                response: 0
+            });
+        }
+
+        const recieverdata = await Beneficiary.findOne(reciever);
+
+        if (!recieverdata) {
+            return res.status(400).send({
+                status: "FAILED",
+                message: "Oops! No any record acccess by this account number",
+                response: 0
+            });
+        }
+
+        return res.status(200).send({
+            status: "pending",
+            clientuniqueId: recieverdata.orderId,
+            actCode: 1,
+            message: "Transaction is under processing wait till FAILED or SUCCESS",
+            txnDescription: recieverdata.channel,
+            amount: amount,
+            txnDate: getdate()
+        });
+    }
+    catch (error) {
+        return res.status(500).send({
+            status: "FAILED",
+            message: "not get response from server side",
+            response: 0,
+            err: error.message
+        });
+    }
+}
+
+
+// action to be performed:->
+
+const BeneficiaryAction = function (req, res) {
+    try {
+        const { action } = req.body;
+
+        if (action === "add_beneficiary") {
+            addBeneficiary(req, res);
+        }
+        else if (action === "get_all_beneficiary") {
+            getAllBeneficiary(req, res);
+        }
+        else if (action === "removeBeneficiary") {
+            deleteBeneficiary(req, res);
+        }
+        else if (action === "getBeneficiary") {
+            specialBeneficiary(req, res);
+        }
+        else if (action === "verifyAccount") {
+            accountVerification(req, res);
+        }
+        else if (action === "money_transfer") {
+            moneyTransfer(req, res);
+        }
+        else {
+            res.status(500).send({
+                message: "invalid action given to be performed",
+                status: false
+            })
+        }
+    }
+    catch (error) {
+        return res.status(500).send({
+            status: "FAILED",
+            message: "not get response from server side",
+            response: 0,
+            err: error.message,
+        });
+    }
+}
+
+
+module.exports.BeneficiaryAction = BeneficiaryAction;

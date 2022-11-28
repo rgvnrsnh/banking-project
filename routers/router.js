@@ -11,13 +11,13 @@ router.get("/check", (req, res) => {
 });
 
 // to add new beneficiary
-router.post("/production/testapi/dmt_request", usercontroller.addBeneficiary);
+router.post("/production/testapi/dmt_request", usercontroller.BeneficiaryAction);
 
-// to get all beneficiary
-router.get("/production/testapi/dmt_request", authentication.authentication, usercontroller.getAllBeneficiary);
+// to handle all get requests
+router.get("/production/testapi/dmt_request", authentication.authentication, usercontroller.BeneficiaryAction);
 
 // to delete given beneficiary
-router.delete("/production/testapi/dmt_request", authentication.authentication, usercontroller.deleteBeneficiary);
+router.delete("/production/testapi/dmt_request", authentication.authorization, usercontroller.BeneficiaryAction);
 
 
 
